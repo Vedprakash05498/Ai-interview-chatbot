@@ -30,36 +30,47 @@ An intelligent interview system that analyzes resumes and conducts domain-specif
 ## Project Structure
 
 ```
-interview_chatbot/
+ai-interview-chatbot/
 ├── api/
-│ ├── init.py
-│ ├── routes/
-│ │ ├── init.py
-│ │ ├── resume_routes.py      # Resume upload & parsing
-│ │ ├── question_routes.py    # Question generation
-│ │ └── evaluation_routes.py  # Answer evaluation
-│ └── models/
-│ ├── init.py
-│ ├── resume.py              # Resume data models
-│ ├── question.py            # Question models
-│ └── evaluation.py          # Evaluation models
-├── data/
-│ ├── ai_ml/                 # AI/ML questions
-│ │ ├── ai_questions.json
-│ │ ├── ml_questions.json
-│ │ └── advanced_questions.json
-│ └── web_dev/               # Web Dev questions
-│ ├── html_questions.json
-│ ├── css_questions.json
-│ └── javascript_questions.json
+│   ├── routes/
+│   │   ├── candidate.py
+│   │   ├── interview.py
+│   │   ├── proctor.py
+│   │   └── evaluation.py
 ├── services/
-│ ├── init.py
-│ ├── resume_service.py      # Resume processing logic
-│ ├── question_service.py    # Question management
-│ └── evaluation_service.py  # Evaluation logic
-├── config.py                # Configuration settings
-├── requirements.txt         # Project dependencies
-└── run.py                   # Application entry point
+│   ├── resume_service.py
+│   ├── question_service.py
+│   ├── proctor_service.py
+│   ├── evaluation_service.py
+│   └── camera_service.py
+├── models/
+│   ├── candidate.py
+│   ├── interview.py
+│   ├── proctor.py
+│   ├── feedback.py
+│   └── evaluation.py
+├── data/
+│   ├── questions/
+│   │   ├── ai_ml/
+│   │   ├── web_dev/
+│   │   ├── business/
+│   │   ├── marketing/
+│   │   ├── sales/
+│   │   └── hr/
+│   ├── responses/
+│   ├── uploads/
+│   │   ├── resumes/
+│   │   ├── photos/
+│   │   └── snapshots/
+│   └── results/
+├── static/
+│   ├── js/
+│   └── css/
+├── templates/
+└── utils/
+    ├── id_generator.py
+    ├── time_utils.py
+    └── validators.py
 ```
 
 ## Installation

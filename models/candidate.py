@@ -3,9 +3,11 @@ from enum import Enum
 from typing import Optional
 
 class Domain(str, Enum):
-    BUSINESS = "business"
-    MARKETING = "marketing"
-    SALES = "sales"
+    AI_ML = "AI/ML"
+    WEB_DEV = "Web Development"
+    BUSINESS = "Business Analyst"
+    MARKETING = "Marketing"
+    SALES = "Sales"
 
 class SkillLevel(str, Enum):
     BEGINNER = "beginner"
@@ -13,13 +15,15 @@ class SkillLevel(str, Enum):
     EXPERT = "expert"
 
 class Candidate(BaseModel):
-    id: str
+    candidate_id: str
+    test_id: str
     name: str
+    father_name: str
     email: EmailStr
     domain: Domain
-    skill_level: SkillLevel
     resume_path: Optional[str] = None
-    test_id: Optional[str] = None
-    father_name: str
     photo_path: Optional[str] = None
-    parsed_resume_data: Optional[dict] = None 
+    camera_enabled: bool = False
+    mobile_camera_connected: bool = False
+    parsed_resume_data: Optional[dict] = None
+    warnings_count: int = 0 
