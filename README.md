@@ -114,7 +114,7 @@ class Config:
 python app.py
 ```
 
-2. Access the API at `http://127.0.0.1:8001`
+2. Access the API at `http://127.0.0.1:8004`
 
 ## API Endpoints
 
