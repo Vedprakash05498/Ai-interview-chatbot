@@ -3,19 +3,23 @@ from enum import Enum
 from typing import Optional
 
 class Domain(str, Enum):
-    AI_ML = "AI/ML"
-    WEB_DEV = "Web Development"
-    SALES = "Sales"
-    BUSINESS_ANALYST = "Business Analyst"
-    MARKETING = "Marketing"
+    BUSINESS = "business"
+    MARKETING = "marketing"
+    SALES = "sales"
+
+class SkillLevel(str, Enum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    EXPERT = "expert"
 
 class Candidate(BaseModel):
-    candidate_id: Optional[str] = None
-    test_id: Optional[str] = None
+    id: str
     name: str
-    father_name: str
     email: EmailStr
     domain: Domain
+    skill_level: SkillLevel
     resume_path: Optional[str] = None
+    test_id: Optional[str] = None
+    father_name: str
     photo_path: Optional[str] = None
     parsed_resume_data: Optional[dict] = None 

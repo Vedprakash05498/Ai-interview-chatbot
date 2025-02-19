@@ -86,15 +86,90 @@ class ResumeService:
             "projects": self._extract_projects(text)
         }
 
-    # Add methods to extract specific information
     def _extract_skills(self, text: str) -> List[str]:
-        # Implement skill extraction logic
-        # This is a placeholder implementation
-        return []
+        """Extract skills from resume text"""
+        # Define comprehensive skill sets
+        skill_keywords = {
+            'ai_ml': {
+                'machine learning', 'deep learning', 'neural networks', 'ai', 'artificial intelligence',
+                'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'opencv', 'computer vision',
+                'nlp', 'natural language processing', 'data science', 'pandas', 'numpy',
+                'data analysis', 'statistics', 'python', 'r', 'jupyter',
+                'big data', 'hadoop', 'spark', 'data mining', 'data visualization',
+                'reinforcement learning', 'cnn', 'rnn', 'lstm', 'transformers'
+            },
+            'web_dev': {
+                'html', 'css', 'javascript', 'typescript', 'react', 'angular', 'vue',
+                'node.js', 'express', 'django', 'flask', 'sql', 'mongodb', 'postgresql',
+                'rest api', 'graphql', 'aws', 'docker', 'kubernetes', 'ci/cd',
+                'git', 'webpack', 'npm', 'yarn', 'redux', 'bootstrap', 'sass',
+                'frontend', 'backend', 'full stack', 'web development', 'responsive design'
+            }
+        }
+
+        found_skills = set()
+        text_lower = text.lower()
+        
+        # Use regex to find skills
+        for domain, skills in skill_keywords.items():
+            for skill in skills:
+                if re.search(r'\b' + re.escape(skill) + r'\b', text_lower):
+                    found_skills.add(skill)
+        
+        # If spaCy is available, use it for better extraction
+        if self.nlp:
+            doc = self.nlp(text)
+            # Look for technical terms and proper nouns
+            for token in doc:
+                if token.pos_ in ['PROPN', 'NOUN'] and len(token.text) > 2:
+                    skill = token.text.lower()
+                    if skill in skill_keywords['ai_ml'] or skill in skill_keywords['web_dev']:
+                        found_skills.add(skill)
+        
+        return list(found_skills)
 
     def _extract_education(self, text: str) -> List[Dict]:
-        # Implement education extraction logic
-        return []
+        """Extract education information"""
+        education_info = []
+        education_text = self._get_section(text, "EDUCATION")
+        
+        if not education_text:
+            return []
+        
+        # Common degree patterns
+        degree_patterns = [
+            r'(B\.?Tech|Bachelor of Technology)',
+            r'(M\.?Tech|Master of Technology)',
+            r'(B\.?E|Bachelor of Engineering)',
+            r'(M\.?S|Master of Science)',
+            r'(B\.?Sc|Bachelor of Science)',
+            r'(Ph\.?D|Doctorate)',
+            r'(MBA|Master of Business Administration)'
+        ]
+        
+        # Split into different education entries
+        entries = education_text.split('\n\n')
+        
+        for entry in entries:
+            edu = {}
+            
+            # Try to extract degree
+            for pattern in degree_patterns:
+                match = re.search(pattern, entry, re.IGNORECASE)
+                if match:
+                    edu['degree'] = match.group(0)
+                    break
+            
+            # Try to extract year
+            year_match = re.search(r'20\d{2}', entry)
+            if year_match:
+                edu['year'] = year_match.group(0)
+            
+            # Try to extract institution
+            if edu:  # Only add if we found a degree
+                education_info.append(edu)
+        
+        return education_info
 
     def _extract_experience(self, text: str) -> List[Dict]:
         # Implement experience extraction logic
@@ -211,27 +286,77 @@ class ResumeService:
         return education[:3]
 
     def determine_domain(self, skills: List[str]) -> str:
-        """Determine if candidate is web dev or AI/ML"""
-        web_dev_count = sum(1 for skill in skills if skill.lower() in self.web_dev_keywords)
-        ai_ml_count = sum(1 for skill in skills if skill.lower() in self.ai_ml_keywords)
+        """Determine candidate's domain based on skills"""
+        ai_ml_score = 0
+        web_dev_score = 0
         
-        return 'web_dev' if web_dev_count > ai_ml_count else 'ai_ml'
+        # Weight different skills
+        skill_weights = {
+            'ai_ml': {
+                'machine learning': 3, 'deep learning': 3, 'neural networks': 3,
+                'tensorflow': 2, 'pytorch': 2, 'data science': 2,
+                'python': 1, 'statistics': 1, 'data analysis': 1
+            },
+            'web_dev': {
+                'react': 3, 'angular': 3, 'node.js': 3,
+                'javascript': 2, 'typescript': 2, 'html': 2,
+                'css': 1, 'git': 1, 'rest api': 1
+            }
+        }
+        
+        for skill in skills:
+            skill_lower = skill.lower()
+            # Check AI/ML skills
+            if skill_lower in skill_weights['ai_ml']:
+                ai_ml_score += skill_weights['ai_ml'][skill_lower]
+            elif skill_lower in self.ai_ml_keywords:
+                ai_ml_score += 1
+            
+            # Check Web Dev skills
+            if skill_lower in skill_weights['web_dev']:
+                web_dev_score += skill_weights['web_dev'][skill_lower]
+            elif skill_lower in self.web_dev_keywords:
+                web_dev_score += 1
+        
+        return 'ai_ml' if ai_ml_score >= web_dev_score else 'web_dev'
 
     def determine_skill_level(self, experience: List[str], skills: List[str]) -> str:
         """Determine candidate's skill level"""
-        # Count years of experience
-        years = 0
-        for exp in experience:
-            if 'year' in exp.lower():
-                try:
-                    years = max(years, int(exp.split()[0]))
-                except:
-                    continue
-
-        # Basic skill level determination
-        if years > 5 or len(skills) > 10:
+        # Calculate years of experience
+        years = self._extract_years_experience(experience)
+        
+        # Calculate skill breadth
+        skill_breadth = len(skills)
+        
+        # Calculate skill depth (looking for advanced terms)
+        advanced_terms = {
+            'ai_ml': {'deep learning', 'neural networks', 'machine learning', 'research'},
+            'web_dev': {'architecture', 'scalability', 'microservices', 'optimization'}
+        }
+        
+        skill_depth = sum(1 for skill in skills if any(
+            term in skill.lower() for term in advanced_terms['ai_ml'] | advanced_terms['web_dev']
+        ))
+        
+        # Determine level based on multiple factors
+        if (years >= 5 or skill_breadth >= 10) and skill_depth >= 3:
             return 'expert'
-        elif years > 2 or len(skills) > 5:
+        elif (years >= 2 or skill_breadth >= 5) and skill_depth >= 1:
             return 'intermediate'
         else:
-            return 'beginner' 
+            return 'beginner'
+
+    def _extract_years_experience(self, experience: List[str]) -> int:
+        """Extract total years of experience"""
+        total_years = 0
+        year_pattern = r'(\d+)[\s-]*(year|yr)'
+        
+        for exp in experience:
+            matches = re.findall(year_pattern, exp.lower())
+            for match in matches:
+                try:
+                    total_years += int(match[0])
+                except ValueError:
+                    continue
+                
+        return total_years 
